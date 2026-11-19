@@ -1,6 +1,6 @@
 # X96 RTL-SDR Server
 
-Rooted Android 9 / ARMv7 setup for sharing a locally attached RTL-SDR dongle over the LAN with an `rtl_tcp`-compatible client.
+On-demand RTL-TCP sharing for a rooted Android TV box running Termux.
 
 ## Target hardware
 
@@ -8,33 +8,29 @@ Rooted Android 9 / ARMv7 setup for sharing a locally attached RTL-SDR dongle ove
 - Nooelec NESDR SMArt v5 (USB ID `0bda:2838`, R820T tuner)
 - Termux-built Osmocom `rtl-sdr` tools
 
+## Architecture
+
+A small TCP proxy listens on port 1234 without opening the USB dongle. When a client connects, it launches `rtl_tcp` bound to loopback port 1235 and relays the RTL-TCP stream. When the client disconnects, it stops that child process and releases the dongle.
+
 ## Current state
 
-- The Osmocom RTL-SDR source was built in Termux.
-- `rtl_tcp` was observed listening on TCP port 1234.
-- The dongle is visible in Android sysfs.
-- A diagnostic run reported `usb_claim_interface error -6`.
+- Osmocom RTL-SDR was built in Termux.
+- NESDR is visible in Android sysfs.
+- A previous test reported `usb_claim_interface error -6`.
+- The diagnostic script is read-only and does not start `rtl_test`.
+- The on-demand proxy and build script are implemented in this repository, but still need compilation and validation on the X96.
 
-**Important correction:** the first diagnostic script itself ran `rtl_test`. Therefore, seeing a new `rtl_test` process after running that diagnostic does not prove that Android or another app restarted it. Future diagnostic scripts must be read-only and must not launch `rtl_test` automatically.
+## Setup
 
-## Safety rules
+See [docs/SETUP.md](docs/SETUP.md).
+
+## Safety
 
 1. Only one process may own the RTL-SDR USB interface at a time.
-2. Do not run `rtl_test` while `rtl_tcp` or SDR Driver is using the dongle.
-3. Stop SDR Driver before starting the standalone server.
-4. Do not kill Android's `android.hardware.usb@1.0-service`; it is a system service.
-5. Do not assume that a successful TCP connection means IQ samples are flowing. The `RTL0` greeting confirms only the initial RTL-TCP handshake.
+2. Stop SDR Driver before starting this service.
+3. Do not run `rtl_test` during an active client session.
+4. A TCP connection alone does not prove IQ streaming; test with a real RTL-TCP client.
 
-## Planned layout
+## Next validation
 
-- `scripts/diagnose.sh` — read-only system, USB, and process report
-- `scripts/server.sh` — single-instance server start/stop/status wrapper
-- `docs/SETUP.md` — installation and operation instructions
-
-## Current diagnostic finding
-
-The reported `usb_claim_interface error -6` is consistent with a busy USB interface (`LIBUSB_ERROR_BUSY`). It does not by itself prove a hardware fault. The exact owner of the interface is not yet established.
-
-## License
-
-Project scripts and documentation: MIT. The separately built Osmocom RTL-SDR project retains its own license and copyright.
+Compile `src/sdr_proxy.c` on the X96 Termux installation and test one client. Boot auto-start and wake-lock management are deferred until this works reliably.
