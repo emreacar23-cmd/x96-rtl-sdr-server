@@ -16,7 +16,8 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#include <sys/wait.h>\n#include <time.h>
+#include <sys/wait.h>
+#include <time.h>
 #include <unistd.h>
 
 static volatile sig_atomic_t stopping = 0;
@@ -30,7 +31,12 @@ static void on_signal(int sig) {
     if (listen_fd >= 0) close((int)listen_fd);
 }
 
-static void sleep_100ms(void) {\n    struct timespec ts = {0, 100000000L};\n    nanosleep(&ts, NULL);\n}\n\nstatic int send_all(int fd, const unsigned char *buf, size_t len) {
+static void sleep_100ms(void) {
+    struct timespec ts = {0, 100000000L};
+    nanosleep(&ts, NULL);
+}
+
+static int send_all(int fd, const unsigned char *buf, size_t len) {
     size_t off = 0;
     while (off < len) {
 #ifdef MSG_NOSIGNAL
@@ -105,7 +111,8 @@ int main(int argc, char **argv) {
     if (!rtl_tcp || access(rtl_tcp, X_OK) != 0 ||
         listen_port < 1 || listen_port > 65535 ||
         backend_port < 1 || backend_port > 65535) {
-        fprintf(stderr, "Usage: %s /absolute/path/rtl_tcp [listen_port] [backend_port]\n", argv[0]);
+        fprintf(stderr, "Usage: %s /absolute/path/rtl_tcp [listen_port] [backend_port]
+", argv[0]);
         return 2;
     }
 
@@ -129,7 +136,8 @@ int main(int argc, char **argv) {
         perror("listen"); close(server); return 1;
     }
 
-    fprintf(stderr, "sdr_proxy listening on 0.0.0.0:%d; rtl_tcp starts per client\n", listen_port);
+    fprintf(stderr, "sdr_proxy listening on 0.0.0.0:%d; rtl_tcp starts per client
+", listen_port);
 
     while (!stopping) {
         struct sockaddr_in peer;
@@ -144,7 +152,8 @@ int main(int argc, char **argv) {
 
         char ip[INET_ADDRSTRLEN] = "?";
         inet_ntop(AF_INET, &peer.sin_addr, ip, sizeof(ip));
-        fprintf(stderr, "client connected: %s\n", ip);
+        fprintf(stderr, "client connected: %s
+", ip);
 
         pid_t child = fork();
         if (child == 0) {
@@ -162,11 +171,13 @@ int main(int argc, char **argv) {
 
         int backend = connect_backend("127.0.0.1", backend_port);
         if (backend >= 0 && !stopping) {
-            fprintf(stderr, "RTL-TCP backend ready; proxying client\n");
+            fprintf(stderr, "RTL-TCP backend ready; proxying client
+");
             relay_session(client, backend);
             close(backend);
         } else {
-            fprintf(stderr, "ERROR: RTL-TCP backend did not start\n");
+            fprintf(stderr, "ERROR: RTL-TCP backend did not start
+");
         }
 
         close(client);
@@ -175,7 +186,7 @@ int main(int argc, char **argv) {
             for (int i = 0; i < 20; i++) {
                 pid_t w = waitpid(child, NULL, WNOHANG);
                 if (w == child) { child = -1; break; }
-                usleep(100000);
+                sleep_100ms();
             }
             if (child > 0) {
                 kill(child, SIGKILL);
@@ -183,12 +194,14 @@ int main(int argc, char **argv) {
             }
         }
         active_child = -1;
-        fprintf(stderr, "client session ended; RTL-TCP stopped\n");
+        fprintf(stderr, "client session ended; RTL-TCP stopped
+");
     }
 
     close(server);
     listen_fd = -1;
     if (active_child > 0) kill((pid_t)active_child, SIGTERM);
-    fprintf(stderr, "sdr_proxy stopped\n");
+    fprintf(stderr, "sdr_proxy stopped
+");
     return 0;
 }
