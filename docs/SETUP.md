@@ -1,60 +1,80 @@
 # X96 setup notes
 
-## Requirements already established on this device
+## Target device
 
 - Android 9, ARMv7
-- Root access through SuperSU
+- Root through SuperSU
 - Termux installed
-- Osmocom RTL-SDR built under:
-  `/data/data/com.termux/files/home/rtl-sdr`
-- NESDR SMArt v5 directly attached to the X96 USB port
+- Osmocom RTL-SDR tools already built at `/data/data/com.termux/files/home/rtl-sdr/build/src/`
+- Nooelec NESDR SMArt v5 directly attached to an X96 USB port
 
-## Copying scripts to the box
+## 1. Get the project
 
-Download `scripts/diagnose.sh` and `scripts/server.sh` from this repository and place both in `/sdcard/Download/`.
-
-## Read-only diagnosis
-
-Stop SDR Driver first. Then run from Termux:
+From the Termux app (normal Termux user):
 
 ```sh
-su -c "sh /sdcard/Download/diagnose.sh"
+pkg install git clang
+git clone https://github.com/emreacar23-cmd/x96-rtl-sdr-server.git
 ```
 
-The report is saved in `/sdcard/Download/`. This script does not start, stop, or open any RTL-SDR process.
+## 2. Build the on-demand proxy
 
-## Server management
+Still as the normal Termux user:
 
-Stop SDR Driver before starting the standalone server. Run:
+```sh
+sh ~/x96-rtl-sdr-server/scripts/build-proxy.sh
+```
+
+This creates `~/rtl-sdr/build/src/sdr_proxy`.
+
+## 3. Copy manager and diagnostic scripts
+
+Copy `scripts/server.sh` and `scripts/diagnose.sh` from the repository to `/sdcard/Download/`.
+
+Stop SDR Driver fully before starting the standalone service.
+
+## 4. Manage the service
+
+Start:
 
 ```sh
 su -c "sh /sdcard/Download/server.sh start"
 ```
 
-Check status:
+Status:
 
 ```sh
 su -c "sh /sdcard/Download/server.sh status"
 ```
 
-Read recent log output:
+Log:
 
 ```sh
 su -c "sh /sdcard/Download/server.sh log"
 ```
 
-Stop the managed server:
+Stop:
 
 ```sh
 su -c "sh /sdcard/Download/server.sh stop"
 ```
 
-The server listens on TCP port 1234 on all interfaces. Use the X96's LAN IP and port 1234 in an RTL-TCP-compatible client.
+Connect an RTL-TCP-compatible client to the X96 LAN IP on TCP port 1234.
 
-## Important limitation of this first server manager
+## On-demand behavior
 
-This version provides controlled start/stop/status and prevents duplicate starts of the process it manages. It does **not yet** stop the server automatically when a phone disconnects, nor does it install boot startup or a wake lock. Those features will be added only after a stable single-client connection is verified.
+- The proxy listens on port 1234 without opening the USB dongle.
+- When a client connects, it launches `rtl_tcp` on loopback port 1235.
+- It relays the RTL-TCP byte stream in both directions.
+- When the client disconnects, the proxy stops its `rtl_tcp` child, releasing the dongle.
+- The proxy remains ready for the next client.
+
+This first implementation supports one active client at a time.
 
 ## USB ownership
 
-Only one program can claim the RTL-SDR USB interface at a time. Fully stop SDR Driver before starting this service. Do not run `rtl_test` while `rtl_tcp` is active.
+Only one process can claim the RTL-SDR USB interface at a time. Stop SDR Driver before starting the service. Do not run `rtl_test` while a client session is active.
+
+## Deferred
+
+Boot auto-start, partial wake lock, automatic USB recovery, and multi-client support will be added only after the single-client on-demand service is verified on the box.
