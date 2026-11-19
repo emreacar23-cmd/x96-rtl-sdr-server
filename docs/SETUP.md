@@ -10,53 +10,48 @@
 
 ## 1. Get the project
 
-From the Termux app (normal Termux user):
+Open the Termux app and run:
 
 ```sh
-pkg install git clang
 git clone https://github.com/emreacar23-cmd/x96-rtl-sdr-server.git
 ```
 
 ## 2. Build the on-demand proxy
 
-Still as the normal Termux user:
+Still in Termux, as the normal Termux user:
 
 ```sh
 sh ~/x96-rtl-sdr-server/scripts/build-proxy.sh
 ```
 
-This creates `~/rtl-sdr/build/src/sdr_proxy`.
+This creates `~/rtl-sdr/build/src/sdr_proxy`. It requires the existing `rtl_tcp` binary and Termux clang.
 
-## 3. Copy manager and diagnostic scripts
-
-Copy `scripts/server.sh` and `scripts/diagnose.sh` from the repository to `/sdcard/Download/`.
+## 3. Start and manage
 
 Stop SDR Driver fully before starting the standalone service.
-
-## 4. Manage the service
 
 Start:
 
 ```sh
-su -c "sh /sdcard/Download/server.sh start"
+su -c "sh /data/data/com.termux/files/home/x96-rtl-sdr-server/scripts/server.sh start"
 ```
 
 Status:
 
 ```sh
-su -c "sh /sdcard/Download/server.sh status"
+su -c "sh /data/data/com.termux/files/home/x96-rtl-sdr-server/scripts/server.sh status"
 ```
 
 Log:
 
 ```sh
-su -c "sh /sdcard/Download/server.sh log"
+su -c "sh /data/data/com.termux/files/home/x96-rtl-sdr-server/scripts/server.sh log"
 ```
 
 Stop:
 
 ```sh
-su -c "sh /sdcard/Download/server.sh stop"
+su -c "sh /data/data/com.termux/files/home/x96-rtl-sdr-server/scripts/server.sh stop"
 ```
 
 Connect an RTL-TCP-compatible client to the X96 LAN IP on TCP port 1234.
@@ -66,7 +61,7 @@ Connect an RTL-TCP-compatible client to the X96 LAN IP on TCP port 1234.
 - The proxy listens on port 1234 without opening the USB dongle.
 - When a client connects, it launches `rtl_tcp` on loopback port 1235.
 - It relays the RTL-TCP byte stream in both directions.
-- When the client disconnects, the proxy stops its `rtl_tcp` child, releasing the dongle.
+- When the client disconnects, it stops its `rtl_tcp` child, releasing the dongle.
 - The proxy remains ready for the next client.
 
 This first implementation supports one active client at a time.
