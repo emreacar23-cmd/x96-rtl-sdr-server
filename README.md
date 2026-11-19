@@ -22,7 +22,7 @@ A small TCP proxy listens on port 1234 without opening the USB dongle. When a cl
 
 ## Setup
 
-See [docs/SETUP.md](docs/SETUP.md).
+See [docs/SETUP.md](docs/SETUP.md). The build is run inside Termux; the service manager can be invoked directly from the repository path with `su -c`.
 
 ## Safety
 
