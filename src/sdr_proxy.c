@@ -21,11 +21,13 @@
 
 static volatile sig_atomic_t stopping = 0;
 static volatile sig_atomic_t active_child = -1;
+static volatile sig_atomic_t listen_fd = -1;
 
 static void on_signal(int sig) {
     (void)sig;
     stopping = 1;
     if (active_child > 0) kill((pid_t)active_child, SIGTERM);
+    if (listen_fd >= 0) close((int)listen_fd);
 }
 
 static void sleep_100ms(void) {\n    struct timespec ts = {0, 100000000L};\n    nanosleep(&ts, NULL);\n}\n\nstatic int send_all(int fd, const unsigned char *buf, size_t len) {
@@ -113,6 +115,7 @@ int main(int argc, char **argv) {
 
     server = socket(AF_INET, SOCK_STREAM, 0);
     if (server < 0) { perror("socket"); return 1; }
+    listen_fd = server;
     setsockopt(server, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
     memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
@@ -184,6 +187,7 @@ int main(int argc, char **argv) {
     }
 
     close(server);
+    listen_fd = -1;
     if (active_child > 0) kill((pid_t)active_child, SIGTERM);
     fprintf(stderr, "sdr_proxy stopped\n");
     return 0;
