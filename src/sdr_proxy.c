@@ -16,7 +16,7 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#include <sys/wait.h>
+#include <sys/wait.h>\n#include <time.h>
 #include <unistd.h>
 
 static volatile sig_atomic_t stopping = 0;
@@ -28,7 +28,7 @@ static void on_signal(int sig) {
     if (active_child > 0) kill((pid_t)active_child, SIGTERM);
 }
 
-static int send_all(int fd, const unsigned char *buf, size_t len) {
+static void sleep_100ms(void) {\n    struct timespec ts = {0, 100000000L};\n    nanosleep(&ts, NULL);\n}\n\nstatic int send_all(int fd, const unsigned char *buf, size_t len) {
     size_t off = 0;
     while (off < len) {
 #ifdef MSG_NOSIGNAL
@@ -58,7 +58,7 @@ static int connect_backend(const char *host, int port) {
             }
             close(fd);
         }
-        usleep(100000);
+        sleep_100ms();
     }
     return -1;
 }
