@@ -1,7 +1,7 @@
 #!/data/data/com.termux/files/usr/bin/sh
 set -eu
 
-SRC_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"\nSRC_DIR="$(CDPATH= cd -- "$SCRIPT_DIR/../src" && pwd)"
 RTL_HOME="/data/data/com.termux/files/home/rtl-sdr"
 OUT_DIR="$RTL_HOME/build/src"
 CC="/data/data/com.termux/files/usr/bin/clang"
