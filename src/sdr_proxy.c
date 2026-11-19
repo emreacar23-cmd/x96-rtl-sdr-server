@@ -111,8 +111,7 @@ int main(int argc, char **argv) {
     if (!rtl_tcp || access(rtl_tcp, X_OK) != 0 ||
         listen_port < 1 || listen_port > 65535 ||
         backend_port < 1 || backend_port > 65535) {
-        fprintf(stderr, "Usage: %s /absolute/path/rtl_tcp [listen_port] [backend_port]
-", argv[0]);
+        fprintf(stderr, "Usage: %s /absolute/path/rtl_tcp [listen_port] [backend_port]\n", argv[0]);
         return 2;
     }
 
@@ -136,8 +135,7 @@ int main(int argc, char **argv) {
         perror("listen"); close(server); return 1;
     }
 
-    fprintf(stderr, "sdr_proxy listening on 0.0.0.0:%d; rtl_tcp starts per client
-", listen_port);
+    fprintf(stderr, "sdr_proxy listening on 0.0.0.0:%d; rtl_tcp starts per client\n", listen_port);
 
     while (!stopping) {
         struct sockaddr_in peer;
@@ -152,8 +150,7 @@ int main(int argc, char **argv) {
 
         char ip[INET_ADDRSTRLEN] = "?";
         inet_ntop(AF_INET, &peer.sin_addr, ip, sizeof(ip));
-        fprintf(stderr, "client connected: %s
-", ip);
+        fprintf(stderr, "client connected: %s\n", ip);
 
         pid_t child = fork();
         if (child == 0) {
@@ -171,13 +168,11 @@ int main(int argc, char **argv) {
 
         int backend = connect_backend("127.0.0.1", backend_port);
         if (backend >= 0 && !stopping) {
-            fprintf(stderr, "RTL-TCP backend ready; proxying client
-");
+            fprintf(stderr, "RTL-TCP backend ready; proxying client\n");
             relay_session(client, backend);
             close(backend);
         } else {
-            fprintf(stderr, "ERROR: RTL-TCP backend did not start
-");
+            fprintf(stderr, "ERROR: RTL-TCP backend did not start\n");
         }
 
         close(client);
@@ -194,14 +189,12 @@ int main(int argc, char **argv) {
             }
         }
         active_child = -1;
-        fprintf(stderr, "client session ended; RTL-TCP stopped
-");
+        fprintf(stderr, "client session ended; RTL-TCP stopped\n");
     }
 
     close(server);
     listen_fd = -1;
     if (active_child > 0) kill((pid_t)active_child, SIGTERM);
-    fprintf(stderr, "sdr_proxy stopped
-");
+    fprintf(stderr, "sdr_proxy stopped\n");
     return 0;
 }
